@@ -16,7 +16,6 @@ from airflow.operators.python import (
     BranchPythonOperator
 )
 import os
-from test_esther_young.ice_breaking import show, pic
 
 with DAG(
     'movie',
