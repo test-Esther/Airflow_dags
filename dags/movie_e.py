@@ -1,56 +1,83 @@
 from datetime import datetime, timedelta
 from textwrap import dedent
+
 from airflow import DAG
+
 from airflow.operators.bash import BashOperator
 from airflow.operators.empty import EmptyOperator
-from airflow.operators.python import (PythonOperator, PythonVirtualenvOperator, BranchPythonOperator)
+from airflow.operators.python import (
+    PythonOperator,
+    BranchPythonOperator,
+    PythonVirtualenvOperator,
+    is_venv_installed,
+)
+
 from airflow.models import Variable
 from pprint import pprint
 
 with DAG(
-    'Movie_E_1234',
+    'movie_e',
     default_args={
         'depends_on_past': False,
         'retries': 1,
         'retry_delay': timedelta(seconds=3)
     },
-    description='About movie',
+    description='movie',
     schedule="10 2 * * *",
-    start_date=datetime(2024, 7, 24),
+    start_date=datetime(2024, 8, 1),
     catchup=True,
-    tags=['movie', 'api', 'extract', 'project'],
+    tags=['project', 'movie', 'api'],
 ) as dag:
 
-    def gen_empty(*ids):
-        tasks=[]
-        for id in ids:
-            task=EmptyOperator(task_id=id)
-            tasks.append(task)
-        return tuple(tasks)
-
-    branch_op=EmptyOperator(
-        task_id="branch.op",
-        trigger_rule='all_done'
+    run_this = EmptyOperator(
+            task_id='run.this',
             )
 
-    rm_dir=EmptyOperator(
-        task_id='rm.dir',
-        trigger_rule="all_done"
+    task_get = EmptyOperator(
+            task_id='task.get',
             )
 
-    get_data=EmptyOperator(
-        task_id='get.data.start',
-        trigger_rule='all_done'
+    save_data = EmptyOperator(
+            task_id='save.data',
             )
-    
-    save_data=EmptyOperator(
-        task_id='save_data',
-        trigger_rule='all_done'
+
+    multi_y = EmptyOperator(
+            task_id='multi.y',
+            )
+
+    multi_n = EmptyOperator(
+            task_id='multi.n',
+            )
+
+    nation_k = EmptyOperator(
+            task_id='nation.k',
+            )
+
+    nation_f = EmptyOperator(
+            task_id='nation.f',
+            )
+
+    branch_op = EmptyOperator(
+            task_id='branch.op',
+            )
+
+    rm_dir = EmptyOperator(
+            task_id='rm.dir',
+            )
+
+    echo_task = EmptyOperator(
+            task_id='echo.task',
             )
    
-    start, end=gen_empty('start', 'end')
 
-    start >> branch_op >> rm_dir >> get_data
-    branch_op >> get_data
+    throw_err = EmptyOperator(
+            task_id='throw.err',
+            )
 
-    get_data >> end
+    task_end = EmptyOperator(task_id='end', trigger_rule="all_done")
+    task_start = EmptyOperator(task_id='start')
+    get_start = EmptyOperator(task_id="get.start",trigger_rule="all_done")
+    get_end = EmptyOperator(task_id="get.end",trigger_rule="all_done" )
+
+    get_start >> [task_get, multi_y, multi_n, nation_k, nation_f] >> get_end
+    get_end >> save_data >> task_end
